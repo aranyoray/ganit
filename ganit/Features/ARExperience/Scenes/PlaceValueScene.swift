@@ -52,6 +52,13 @@ struct PlaceValueScene: View {
                         Text(total)
                             .font(.title2.bold())
                             .foregroundColor(.blue)
+
+                        Button("Next Number") {
+                            targetNumber = Int.random(in: 11...99)
+                            currentTotal = nil
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.blue)
                     }
 
                     HStack(spacing: 16) {
@@ -105,7 +112,11 @@ struct PlaceValueARContainer: UIViewRepresentable {
         context.coordinator.createARView()
     }
 
-    func updateUIView(_ uiView: ARView, context: Context) {}
+    func updateUIView(_ uiView: ARView, context: Context) {
+        if context.coordinator.targetNumber != targetNumber {
+            context.coordinator.updateTarget(targetNumber)
+        }
+    }
 
     func makeCoordinator() -> PlaceValueCoordinator {
         PlaceValueCoordinator(
@@ -120,7 +131,7 @@ struct PlaceValueARContainer: UIViewRepresentable {
 // MARK: - Place Value Coordinator
 
 class PlaceValueCoordinator: ARSceneCoordinator {
-    let targetNumber: Int
+    var targetNumber: Int
     var onTotalUpdate: (String) -> Void
 
     // Scene entities
@@ -158,6 +169,12 @@ class PlaceValueCoordinator: ARSceneCoordinator {
     }
 
     // MARK: - Scene Construction
+
+    func updateTarget(_ number: Int) {
+        targetNumber = number
+        placeNumber(number)
+        speak("How many tens are in \(number)?")
+    }
 
     override func placeContent(on planeAnchor: ARPlaneAnchor, in session: ARSession) {
         placeNumber(targetNumber)
@@ -300,8 +317,6 @@ class PlaceValueCoordinator: ARSceneCoordinator {
         }
 
         ones += 10
-
-        speak("One ten becomes 10 ones!")
         updateTotalDisplay()
     }
 
@@ -342,7 +357,6 @@ class PlaceValueCoordinator: ARSceneCoordinator {
             rodTransform.scale = SIMD3(repeating: 1.0)
             rod.move(to: rodTransform, relativeTo: rod.parent, duration: 0.3)
 
-            self.speak("10 ones make one ten!")
             self.updateTotalDisplay()
         }
     }
@@ -360,17 +374,20 @@ class PlaceValueCoordinator: ARSceneCoordinator {
     // MARK: - Gesture Handler
 
     override func handleEntityTap(_ entity: Entity, in arView: ARView) {
+        // Prevent overlapping speech
+        guard !synthesizer.isSpeaking else { return }
+
         if entity.name.hasPrefix("ten_") {
             if let index = tenEntities.firstIndex(where: { $0.name == entity.name }) {
                 speak("Breaking apart a ten!")
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                     self?.decomposeRod(at: index)
                 }
             }
         } else if entity.name.hasPrefix("one_") {
             if oneEntities.count >= 10 {
                 speak("Grouping 10 ones into a ten!")
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                     self?.composeCubes()
                 }
             } else {

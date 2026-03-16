@@ -30,6 +30,9 @@ struct GanitApp: App {
         let storage = EncryptedStorage.shared
         let touch = TouchPatternProvider()
 
+        // Always sync Gemini API key from Secrets.swift
+        storage.saveAPIKey(Secrets.geminiAPIKey)
+
         _firebaseAuth = StateObject(wrappedValue: FirebaseAuthService())
         _progressState = StateObject(wrappedValue: ProgressState(storage: storage))
         _questionService = StateObject(wrappedValue: AIQuestionService(storage: storage))

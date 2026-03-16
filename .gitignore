@@ -1,0 +1,15 @@
+# Secrets — never commit these
+ganit/Secrets.swift
+ganit/GoogleService-Info.plist
+
+# Xcode
+*.xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+build/
+
+# macOS
+.DS_Store
+
+# Firebase
+firebase/functions/node_modules/

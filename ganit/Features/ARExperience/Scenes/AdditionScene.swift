@@ -58,6 +58,14 @@ struct AdditionScene: View {
                             .font(.title2.bold())
                             .foregroundColor(.green)
                             .transition(.scale)
+
+                        Button("Next Example") {
+                            leftCount = Int.random(in: 1...5)
+                            rightCount = Int.random(in: 1...5)
+                            resultText = nil
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.green)
                     }
                 }
                 .padding()
@@ -85,7 +93,12 @@ struct AdditionARContainer: UIViewRepresentable {
         context.coordinator.createARView(enablePan: true)
     }
 
-    func updateUIView(_ uiView: ARView, context: Context) {}
+    func updateUIView(_ uiView: ARView, context: Context) {
+        let coord = context.coordinator
+        if coord.leftCount != leftCount || coord.rightCount != rightCount {
+            coord.updateCounts(left: leftCount, right: rightCount)
+        }
+    }
 
     func makeCoordinator() -> AdditionCoordinator {
         AdditionCoordinator(
@@ -101,8 +114,8 @@ struct AdditionARContainer: UIViewRepresentable {
 // MARK: - Addition Coordinator
 
 class AdditionCoordinator: ARSceneCoordinator {
-    let leftCount: Int
-    let rightCount: Int
+    var leftCount: Int
+    var rightCount: Int
     var onResult: (String) -> Void
 
     // Entity tracking
@@ -136,6 +149,23 @@ class AdditionCoordinator: ARSceneCoordinator {
     }
 
     // MARK: - Scene Construction
+
+    func updateCounts(left: Int, right: Int) {
+        leftCount = left
+        rightCount = right
+        // Clean up old content
+        leftGroupAnchor?.removeFromParent()
+        rightGroupAnchor?.removeFromParent()
+        leftEntities.removeAll()
+        rightEntities.removeAll()
+        isMerged = false
+        // Re-place with new counts if we already have a plane
+        if hasPlacedContent, let arView = arView,
+           let anchor = arView.session.currentFrame?.anchors.compactMap({ $0 as? ARPlaneAnchor }).first {
+            placeGroups(on: anchor)
+            speak("Let's add \(leftCount) and \(rightCount) together!")
+        }
+    }
 
     override func placeContent(on planeAnchor: ARPlaneAnchor, in session: ARSession) {
         placeGroups(on: planeAnchor)

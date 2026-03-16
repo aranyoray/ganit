@@ -21,6 +21,7 @@ class AIQuestionService: ObservableObject, QuestionServiceProtocol {
     #if canImport(GoogleGenerativeAI)
     private var model: GenerativeModel?
     #endif
+    private var consecutiveFailures: Int = 0
     private var totalAttempts: Int = 0
     private var correctAttempts: Int = 0
     private var recentMistakes: [String] = []
@@ -34,7 +35,7 @@ class AIQuestionService: ObservableObject, QuestionServiceProtocol {
         self.storage = storage
         #if canImport(GoogleGenerativeAI)
         if let key = storage.loadAPIKey() {
-            model = GenerativeModel(name: "gemini-1.5-flash", apiKey: key)
+            model = GenerativeModel(name: "gemini-2.5-flash", apiKey: key)
         } else {
             needsAPIKey = true
         }
@@ -46,7 +47,7 @@ class AIQuestionService: ObservableObject, QuestionServiceProtocol {
     func configure(apiKey: String) {
         storage.saveAPIKey(apiKey)
         #if canImport(GoogleGenerativeAI)
-        model = GenerativeModel(name: "gemini-1.5-flash", apiKey: apiKey)
+        model = GenerativeModel(name: "gemini-2.5-flash", apiKey: apiKey)
         #endif
         needsAPIKey = false
     }
@@ -68,6 +69,9 @@ class AIQuestionService: ObservableObject, QuestionServiceProtocol {
     func generateMCQ(grade: Int, topic: String) async -> MCQQuestion? {
         #if canImport(GoogleGenerativeAI)
         guard let model else { return nil }
+
+        // Circuit breaker: after 3 consecutive failures, stop trying
+        guard consecutiveFailures < 3 else { return nil }
 
         let difficulty = DifficultyLevel.from(accuracy: accuracy).rawValue
         let mistakesText = recentMistakes.isEmpty ? "none" : recentMistakes.suffix(3).joined(separator: "; ")
@@ -102,23 +106,63 @@ class AIQuestionService: ObservableObject, QuestionServiceProtocol {
         {"question": "text", "options": ["A", "B", "C", "D"], "correct_index": 0, "hint": "short hint"}
         """
 
-        do {
-            let response = try await model.generateContent(prompt)
-            guard let text = response.text else { return nil }
+        // Run API call off main actor with 3-second timeout
+        let apiModel = model
+        let apiTask = Task.detached { () -> MCQQuestion? in
+            do {
+                let response = try await apiModel.generateContent(prompt)
+                guard let text = response.text else { return nil }
+                let cleaned = text
+                    .replacingOccurrences(of: "```json", with: "")
+                    .replacingOccurrences(of: "```", with: "")
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                guard let data = cleaned.data(using: .utf8) else { return nil }
+                return try JSONDecoder().decode(MCQQuestion.self, from: data)
+            } catch {
+                return nil
+            }
+        }
 
-            let cleaned = text
-                .replacingOccurrences(of: "```json", with: "")
-                .replacingOccurrences(of: "```", with: "")
-                .trimmingCharacters(in: .whitespacesAndNewlines)
+        // Race against 3-second timeout
+        let timeoutTask = Task.detached {
+            try await Task.sleep(nanoseconds: 3_000_000_000)
+        }
 
-            guard let data = cleaned.data(using: .utf8) else { return nil }
-            return try JSONDecoder().decode(MCQQuestion.self, from: data)
-        } catch {
-            SignalLogger.signalProviderStarted("AIQuestionService", available: false) // Generation error: \(error)")
+        // Wait for whichever finishes first
+        let result: MCQQuestion? = await withTaskGroup(of: MCQQuestion?.self) { group in
+            group.addTask { await apiTask.value }
+            group.addTask {
+                try? await timeoutTask.value
+                return nil  // timeout → nil
+            }
+            let first = await group.next() ?? nil
+            apiTask.cancel()
+            timeoutTask.cancel()
+            group.cancelAll()
+            return first
+        }
+
+        if let question = result {
+            consecutiveFailures = 0
+            return question
+        } else {
+            consecutiveFailures += 1
+            if consecutiveFailures == 1 {
+                SignalLogger.signalProviderStarted("AIQuestionService", available: false)
+            }
             return nil
         }
         #else
         return nil  // Will use fallback
+        #endif
+    }
+
+    /// Whether the Gemini API is available (model configured, not circuit-broken).
+    var hasAPI: Bool {
+        #if canImport(GoogleGenerativeAI)
+        return model != nil && consecutiveFailures < 3
+        #else
+        return false
         #endif
     }
 
@@ -133,22 +177,19 @@ class AIQuestionService: ObservableObject, QuestionServiceProtocol {
             return
         }
 
-        // Try API with 8-second timeout, fall back to offline if it fails or times out
-        let question: MCQQuestion? = await withTaskGroup(of: MCQQuestion?.self) { group in
-            group.addTask { await self.generateMCQ(grade: grade, topic: topic) }
-            group.addTask {
-                try? await Task.sleep(nanoseconds: 8_000_000_000)
-                return nil  // Timeout sentinel
-            }
-            // Return whichever finishes first
-            for await result in group {
-                group.cancelAll()
-                return result
-            }
-            return nil
+        // If no API key, skip network entirely — instant fallback
+        guard hasAPI else {
+            currentQuestion = Self.generateFallback(topic: topic)
+            isLoading = false
+            return
         }
 
-        currentQuestion = question ?? Self.generateFallback(topic: topic)
+        // API available: try with timeout
+        if let q = await generateMCQ(grade: grade, topic: topic) {
+            currentQuestion = q
+        } else {
+            currentQuestion = Self.generateFallback(topic: topic)
+        }
         isLoading = false
     }
 

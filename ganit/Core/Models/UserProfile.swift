@@ -26,7 +26,7 @@ struct UserProfile: Codable {
         userGroup: UserGroup,
         age: Int? = nil,
         parentEmail: String? = nil,
-        consentGranted: Bool = false,
+        consentGranted: Bool = true,
         createdAt: Date = Date()
     ) {
         self.id = id

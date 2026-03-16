@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - Unified Quiz View
 
 struct QuizView: View {
-    @ObservedObject var viewModel: QuizViewModel
+    @StateObject var viewModel: QuizViewModel
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -11,9 +11,10 @@ struct QuizView: View {
             switch viewModel.state {
             case .idle:
                 Spacer()
-                Text("Loading...")
-                    .foregroundColor(.secondary)
-                    .task { await viewModel.loadQuestion() }
+                ProgressView("Loading...")
+                    .task(id: viewModel.questionsAnswered) {
+                        await viewModel.loadQuestion()
+                    }
                 Spacer()
 
             case .loading:
@@ -58,7 +59,7 @@ struct QuizView: View {
     private var progressHeader: some View {
         VStack(spacing: 4) {
             HStack {
-                Text("Q \(viewModel.questionsAnswered + 1)/\(QuizViewModel.questionsPerSession)")
+                Text("Q \(min(viewModel.questionsAnswered + (viewModel.isAnswered ? 0 : 1), QuizViewModel.questionsPerSession))/\(QuizViewModel.questionsPerSession)")
                     .font(.caption.bold())
                 Spacer()
                 Text("\(viewModel.correctCount) correct")

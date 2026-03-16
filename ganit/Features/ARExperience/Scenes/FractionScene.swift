@@ -55,6 +55,13 @@ struct FractionScene: View {
                         Text(info)
                             .font(.headline)
                             .foregroundColor(.orange)
+
+                        Button("Next Example") {
+                            targetDenominator = [2, 3, 4].randomElement() ?? 3
+                            sliceInfo = nil
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.orange)
                     }
 
                     // Denominator selector
@@ -207,15 +214,16 @@ class FractionCoordinator: ARSceneCoordinator {
         let anglePerSlice = (2 * Float.pi) / Float(targetDenominator)
 
         for i in 0..<targetDenominator {
-            let sliceWidth = discRadius * 0.8
-            let sliceDepth = discRadius * sin(anglePerSlice / 2) * 1.5
+            // Wedge-like shape: narrow at center, wider at edge
+            let sliceLength = discRadius * 0.85
+            let sliceWidth = 2 * discRadius * sin(anglePerSlice / 2) * 0.85
             let mesh = MeshResource.generateBox(
                 size: SIMD3<Float>(
-                    min(sliceWidth, discRadius),
+                    max(sliceWidth, 0.02),
                     discHeight,
-                    max(sliceDepth, 0.02)
+                    sliceLength
                 ),
-                cornerRadius: 0.003
+                cornerRadius: 0.005
             )
             let color = sliceColors[i % sliceColors.count]
             let material = SimpleMaterial(color: color, isMetallic: false)
@@ -223,7 +231,15 @@ class FractionCoordinator: ARSceneCoordinator {
             slice.name = "slice_\(i)"
             slice.generateCollisionShapes(recursive: false)
 
-            slice.position = SIMD3<Float>(0, discHeight / 2, 0)
+            // Place in a circle from the start (pre-separated)
+            let angle = Float(i) * anglePerSlice + anglePerSlice / 2
+            let placementRadius = discRadius * 0.45
+            slice.position = SIMD3<Float>(
+                cos(angle) * placementRadius,
+                discHeight / 2,
+                sin(angle) * placementRadius
+            )
+            slice.orientation = simd_quatf(angle: angle, axis: SIMD3<Float>(0, 1, 0))
 
             anchor.addChild(slice)
             sliceEntities.append(slice)

@@ -1,21 +1,21 @@
 import SwiftUI
 import Combine
+import LocalAuthentication
 
 // MARK: - Privacy Settings View Model
 
 @MainActor
 class PrivacySettingsViewModel: ObservableObject {
     @Published var consent: BiometricConsent
-    @Published var parentalConsentGranted: Bool
     @Published var sessionCount: Int = 0
+    @Published var parentModeUnlocked: Bool = false
 
     private let storage: StorageProvider
     private let username: String
 
-    init(storage: StorageProvider, username: String, parentalConsentGranted: Bool) {
+    init(storage: StorageProvider, username: String) {
         self.storage = storage
         self.username = username
-        self.parentalConsentGranted = parentalConsentGranted
         self.consent = storage.readCodable(
             BiometricConsent.storageKey,
             as: BiometricConsent.self,
@@ -27,6 +27,27 @@ class PrivacySettingsViewModel: ObservableObject {
 
     func saveConsent() {
         storage.saveCodable(BiometricConsent.storageKey, value: consent, user: username)
+    }
+
+    func authenticateParent() {
+        let context = LAContext()
+        var error: NSError?
+
+        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
+            // No biometrics — fall back to passcode
+            context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: "Unlock parent settings") { success, _ in
+                Task { @MainActor in
+                    self.parentModeUnlocked = success
+                }
+            }
+            return
+        }
+
+        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: "Unlock parent settings") { success, _ in
+            Task { @MainActor in
+                self.parentModeUnlocked = success
+            }
+        }
     }
 
     func deleteAllData() {
@@ -70,7 +91,7 @@ class PrivacySettingsViewModel: ObservableObject {
     }
 }
 
-// MARK: - Privacy Settings View
+// MARK: - Settings View
 
 struct PrivacySettingsView: View {
     @ObservedObject var viewModel: PrivacySettingsViewModel
@@ -79,6 +100,7 @@ struct PrivacySettingsView: View {
 
     var body: some View {
         List {
+            // Learning Signals
             Section("Learning Signals") {
                 Toggle("Eye Tracking", isOn: $viewModel.consent.eyeTrackingEnabled)
                 Toggle("Face Expressions", isOn: $viewModel.consent.facialAnalysisEnabled)
@@ -90,27 +112,54 @@ struct PrivacySettingsView: View {
             .onChange(of: viewModel.consent.touchTrackingEnabled) { viewModel.saveConsent() }
             .onChange(of: viewModel.consent.voiceTrackingEnabled) { viewModel.saveConsent() }
 
-            Section("Delete Data") {
-                if dataDeleted {
-                    Text("All data has been deleted.")
-                        .foregroundColor(.green)
-                } else {
-                    Button("Delete All My Data", role: .destructive) {
-                        showDeleteConfirmation = true
+            // Parent Settings — locked behind Face ID
+            Section {
+                if viewModel.parentModeUnlocked {
+                    NavigationLink(value: AppDestination.parentDashboard) {
+                        Label("Dashboard & Reports", systemImage: "chart.bar")
                     }
-                    .alert("Delete All Data?", isPresented: $showDeleteConfirmation) {
-                        Button("Cancel", role: .cancel) {}
-                        Button("Delete Everything", role: .destructive) {
-                            viewModel.deleteAllData()
-                            dataDeleted = true
+                    NavigationLink(value: AppDestination.learningStory) {
+                        Label("Learning Story", systemImage: "book")
+                    }
+
+                    if dataDeleted {
+                        Text("All data has been deleted.")
+                            .foregroundColor(.green)
+                    } else {
+                        Button("Delete All Data", role: .destructive) {
+                            showDeleteConfirmation = true
                         }
-                    } message: {
-                        Text("This will permanently delete all data. This cannot be undone.")
+                        .alert("Delete All Data?", isPresented: $showDeleteConfirmation) {
+                            Button("Cancel", role: .cancel) {}
+                            Button("Delete Everything", role: .destructive) {
+                                viewModel.deleteAllData()
+                                dataDeleted = true
+                            }
+                        } message: {
+                            Text("This will permanently delete all progress, sessions, and personal data. This cannot be undone.")
+                        }
                     }
+
+                    Button("Lock Parent Settings") {
+                        viewModel.parentModeUnlocked = false
+                    }
+                    .foregroundColor(.secondary)
+                } else {
+                    Button {
+                        viewModel.authenticateParent()
+                    } label: {
+                        Label("Unlock with Face ID", systemImage: "faceid")
+                    }
+                }
+            } header: {
+                Text("Parent Settings")
+            } footer: {
+                if !viewModel.parentModeUnlocked {
+                    Text("Dashboard, reports, and data controls are protected with Face ID.")
                 }
             }
         }
-        .navigationTitle("Privacy Settings")
+        .navigationTitle("Settings")
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif

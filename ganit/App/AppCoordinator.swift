@@ -18,7 +18,6 @@ enum AppDestination: Hashable {
     case profile
     case parentDashboard
     case learningStory
-    case parentalConsent
     case settings
 }
 
@@ -38,9 +37,6 @@ struct HomeScreen: View {
         NavigationStack(path: $path) {
             ScrollView {
                 VStack(spacing: 16) {
-                    ConsentStatusBanner(user: firebaseAuth.currentUser)
-                        .padding(.horizontal)
-
                     // Score header
                     HStack {
                         Label("\(progressState.score)", systemImage: "star.fill")
@@ -62,115 +58,144 @@ struct HomeScreen: View {
                             .foregroundColor(.secondary)
                     }
 
-                    // Content by user group
-                    if userGroup == .child {
-                        Text("Choose your mode:")
-                            .font(.headline)
+                    // Math Practice
+                    Text("Math Practice")
+                        .font(.headline)
 
-                        VStack(spacing: 8) {
-                            ForEach(QuizMode.allCases, id: \.self) { mode in
-                                NavigationLink(value: AppDestination.quiz(mode)) {
-                                    HStack {
-                                        Text(mode.symbol).font(.title2)
-                                        Text(mode.displayName)
-                                        Spacer()
-                                        Text("Lv \(progressState.levelFor(mode: mode))")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    .padding()
-                                    .background(Color.blue.opacity(0.1))
-                                    .cornerRadius(8)
+                    VStack(spacing: 8) {
+                        ForEach(QuizMode.allCases, id: \.self) { mode in
+                            NavigationLink(value: AppDestination.quiz(mode)) {
+                                HStack {
+                                    Text(mode.symbol).font(.title2)
+                                    Text(mode.displayName)
+                                    Spacer()
+                                    Text("Lv \(progressState.levelFor(mode: mode))")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
                                 }
-                                .foregroundColor(.primary)
+                                .padding()
+                                .background(Color.blue.opacity(0.1))
+                                .cornerRadius(8)
                             }
+                            .foregroundColor(.primary)
                         }
-                        .padding(.horizontal)
+                    }
+                    .padding(.horizontal)
 
-                        NavigationLink(value: AppDestination.arQuiz) {
-                            Text("Try AR Mode")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                        .padding(.horizontal)
-
-                    } else {
-                        Text("Cognitive Exercises")
-                            .font(.headline)
-
-                        NavigationLink(value: AppDestination.cognitiveExercises) {
+                    // Brain Training
+                    NavigationLink(value: AppDestination.cognitiveExercises) {
+                        HStack {
+                            Image(systemName: "brain.head.profile")
                             Text("Brain Training")
-                                .frame(maxWidth: .infinity)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondary)
                         }
-                        .buttonStyle(.borderedProminent)
-                        .padding(.horizontal)
-
-                        Text("Math Practice")
-                            .font(.headline)
-
-                        VStack(spacing: 8) {
-                            ForEach(QuizMode.allCases, id: \.self) { mode in
-                                NavigationLink(value: AppDestination.quiz(mode)) {
-                                    HStack {
-                                        Text(mode.symbol).font(.title2)
-                                        Text(mode.displayName)
-                                        Spacer()
-                                        Text("Lv \(progressState.levelFor(mode: mode))")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    .padding()
-                                    .background(Color.blue.opacity(0.1))
-                                    .cornerRadius(8)
-                                }
-                                .foregroundColor(.primary)
-                            }
-                        }
-                        .padding(.horizontal)
+                        .padding()
+                        .background(Color.green.opacity(0.1))
+                        .cornerRadius(8)
                     }
-
-                    Divider().padding(.horizontal)
-
-                    // Bottom nav
-                    HStack {
-                        NavigationLink(value: AppDestination.profile) {
-                            VStack {
-                                Image(systemName: "person.circle")
-                                Text("Profile").font(.caption)
-                            }
-                        }
-                        Spacer()
-                        NavigationLink(value: AppDestination.shop) {
-                            VStack {
-                                Image(systemName: "cart")
-                                Text("Shop").font(.caption)
-                            }
-                        }
-                        Spacer()
-                        NavigationLink(value: AppDestination.parentDashboard) {
-                            VStack {
-                                Image(systemName: "chart.bar")
-                                Text("Dashboard").font(.caption)
-                            }
-                        }
-                        Spacer()
-                        NavigationLink(value: AppDestination.settings) {
-                            VStack {
-                                Image(systemName: "gearshape")
-                                Text("Settings").font(.caption)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 30)
                     .foregroundColor(.primary)
+                    .padding(.horizontal)
+
+                    // AR Experiences
+                    arSection
+
                 }
                 .padding(.vertical)
             }
+
+            Divider()
+
+            // Bottom nav — pinned outside ScrollView
+            HStack {
+                NavigationLink(value: AppDestination.profile) {
+                    VStack(spacing: 2) {
+                        Image(systemName: "person.circle")
+                        Text("Profile").font(.caption2)
+                    }
+                }
+                Spacer()
+                NavigationLink(value: AppDestination.shop) {
+                    VStack(spacing: 2) {
+                        Image(systemName: "cart")
+                        Text("Shop").font(.caption2)
+                    }
+                }
+                Spacer()
+                NavigationLink(value: AppDestination.settings) {
+                    VStack(spacing: 2) {
+                        Image(systemName: "gearshape")
+                        Text("Settings").font(.caption2)
+                    }
+                }
+            }
+            .padding(.horizontal, 50)
+            .padding(.vertical, 8)
+            .foregroundColor(.primary)
+            .background(Color(UIColor.systemBackground))
+
             .navigationTitle("Ganit")
             .navigationDestination(for: AppDestination.self) { destination in
                 destinationView(for: destination)
             }
         }
+    }
+
+    // MARK: - AR Section
+
+    @ViewBuilder
+    private var arSection: some View {
+        Text("AR Experiences")
+            .font(.headline)
+            .padding(.top, 4)
+
+        NavigationLink(value: AppDestination.arQuiz) {
+            HStack {
+                Image(systemName: "arkit")
+                Text("Try AR Mode")
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .background(Color.purple.opacity(0.1))
+            .cornerRadius(8)
+        }
+        .foregroundColor(.primary)
+        .padding(.horizontal)
+
+        let arScenes: [(AppDestination, String, String)] = [
+            (.arAddition, "plus.circle", "Addition — Merge & Split"),
+            (.arFractions, "divide.circle", "Fractions — Slice a Pizza"),
+            (.arPlaceValue, "textformat.123", "Place Value — Ones & Tens"),
+            (.arPlayground, "cube", "Number Playground"),
+            (.arGrouping, "tray.full", "Grouping — Collect Objects"),
+            (.arWalkAround, "figure.walk", "Walk Around Numbers"),
+        ]
+
+        VStack(spacing: 6) {
+            ForEach(arScenes, id: \.1) { dest, icon, label in
+                NavigationLink(value: dest) {
+                    HStack {
+                        Image(systemName: icon)
+                            .frame(width: 24)
+                        Text(label)
+                            .font(.subheadline)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(Color.purple.opacity(0.05))
+                    .cornerRadius(6)
+                }
+                .foregroundColor(.primary)
+            }
+        }
+        .padding(.horizontal)
     }
 
     // MARK: - Destination Router
@@ -267,18 +292,11 @@ struct HomeScreen: View {
                 sessions: loadAllSessions()
             )
 
-        case .parentalConsent:
-            ParentalConsentView(
-                authService: firebaseAuth,
-                username: progressState.username
-            )
-
         case .settings:
             PrivacySettingsView(
                 viewModel: PrivacySettingsViewModel(
                     storage: EncryptedStorage.shared,
-                    username: progressState.username,
-                    parentalConsentGranted: firebaseAuth.currentUser?.consentGranted ?? false
+                    username: progressState.username
                 )
             )
         }

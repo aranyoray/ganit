@@ -28,11 +28,15 @@ class FirebaseAuthService: ObservableObject {
         // Listen for auth state changes (handles app restart with existing session)
         authStateListener = Auth.auth().addStateDidChangeListener { [weak self] _, firebaseUser in
             Task { @MainActor in
+                guard let self = self else { return }
                 if let firebaseUser {
-                    await self?.loadUserProfile(uid: firebaseUser.uid)
+                    // Don't overwrite if already authenticated (e.g. guest just set their profile)
+                    if !self.isAuthenticated {
+                        await self.loadUserProfile(uid: firebaseUser.uid)
+                    }
                 } else {
-                    self?.currentUser = nil
-                    self?.isAuthenticated = false
+                    self.currentUser = nil
+                    self.isAuthenticated = false
                 }
             }
         }
@@ -65,13 +69,6 @@ class FirebaseAuthService: ObservableObject {
             return false
         }
 
-        if userGroup == .child {
-            if let age = age, age < 13, (parentEmail == nil || parentEmail!.isEmpty) {
-                authError = "Parent email is required for users under 13."
-                return false
-            }
-        }
-
         isLoading = true
         authError = nil
 
@@ -87,7 +84,7 @@ class FirebaseAuthService: ObservableObject {
                 userGroup: userGroup,
                 age: age,
                 parentEmail: parentEmail,
-                consentGranted: userGroup == .elderly
+                consentGranted: true
             )
 
             try await db.collection("users").document(uid).setData([
@@ -155,16 +152,17 @@ class FirebaseAuthService: ObservableObject {
 
     func continueAsGuest() async {
         isLoading = true
+        authError = nil
         do {
-            try await Auth.auth().signInAnonymously()
+            let result = try await Auth.auth().signInAnonymously()
+            // Set profile immediately so the auth listener doesn't race
             currentUser = UserProfile(
-                username: "guest_\(UUID().uuidString.prefix(8))",
-                userGroup: .child,
-                consentGranted: false
+                username: "guest_\(result.user.uid.prefix(8))",
+                userGroup: .child
             )
             isAuthenticated = true
         } catch {
-            authError = "Could not start guest session."
+            authError = "Could not start guest session. Check your internet connection."
         }
         isLoading = false
     }
@@ -193,28 +191,6 @@ class FirebaseAuthService: ObservableObject {
         }
     }
 
-    // MARK: - COPPA Consent
-
-    @discardableResult
-    func grantParentalConsent(for username: String) async -> Bool {
-        guard var profile = currentUser, profile.username == username else { return false }
-        guard let uid = Auth.auth().currentUser?.uid else { return false }
-
-        profile.consentGranted = true
-        currentUser = profile
-
-        do {
-            try await db.collection("users").document(uid).updateData([
-                "consentGranted": true,
-                "consentGrantedAt": FieldValue.serverTimestamp()
-            ])
-            return true
-        } catch {
-            authError = "Failed to save consent."
-            return false
-        }
-    }
-
     // MARK: - Load Profile from Firestore
 
     private func loadUserProfile(uid: String) async {
@@ -224,8 +200,7 @@ class FirebaseAuthService: ObservableObject {
                 // Anonymous user without profile
                 currentUser = UserProfile(
                     username: "guest_\(uid.prefix(8))",
-                    userGroup: .child,
-                    consentGranted: false
+                    userGroup: .child
                 )
                 isAuthenticated = true
                 return
@@ -237,7 +212,7 @@ class FirebaseAuthService: ObservableObject {
                 userGroup: UserGroup(rawValue: data["userGroup"] as? String ?? "child") ?? .child,
                 age: data["age"] as? Int,
                 parentEmail: data["parentEmail"] as? String,
-                consentGranted: data["consentGranted"] as? Bool ?? false
+                consentGranted: true
             )
             isAuthenticated = true
         } catch {

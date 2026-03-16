@@ -27,6 +27,16 @@ struct FirebaseAuthRootView: View {
                 Task { await authService.continueAsGuest() }
             }
             .foregroundColor(.secondary)
+
+            if authService.isLoading {
+                ProgressView()
+            }
+
+            if let error = authService.authError {
+                Text(error)
+                    .font(.caption)
+                    .foregroundColor(.red)
+            }
         }
         .padding()
     }
@@ -88,8 +98,6 @@ struct FirebaseSignUpView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var selectedGroup: UserGroup = .child
-    @State private var age = ""
-    @State private var parentEmail = ""
 
     var body: some View {
         ScrollView {
@@ -116,21 +124,6 @@ struct FirebaseSignUpView: View {
                 }
                 .pickerStyle(.segmented)
 
-                if selectedGroup == .child {
-                    TextField("Age", text: $age)
-                        .textFieldStyle(.roundedBorder)
-                        #if os(iOS)
-                        .keyboardType(.numberPad)
-                        #endif
-
-                    TextField("Parent's email", text: $parentEmail)
-                        .textFieldStyle(.roundedBorder)
-                        #if os(iOS)
-                        .keyboardType(.emailAddress)
-                        .textInputAutocapitalization(.never)
-                        #endif
-                }
-
                 if let error = authService.authError {
                     Text(error)
                         .font(.caption)
@@ -147,8 +140,8 @@ struct FirebaseSignUpView: View {
                                 email: email,
                                 password: password,
                                 userGroup: selectedGroup,
-                                age: Int(age),
-                                parentEmail: parentEmail.isEmpty ? nil : parentEmail
+                                age: nil,
+                                parentEmail: nil
                             )
                         }
                     }

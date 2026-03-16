@@ -117,6 +117,11 @@ class QuizViewModel: ObservableObject {
         questionStartTime = Date()
         currentAnswerChanges = 0
 
+        // Auto-enable fallback if no API configured
+        if !questionService.hasAPI {
+            useFallback = true
+        }
+
         if useFallback {
             let q = questionService.fallbackQuestion(topic: mode.topic)
             state = .presenting(q)
@@ -135,7 +140,11 @@ class QuizViewModel: ObservableObject {
         } else if let err = questionService.errorMessage {
             state = .error(err)
         } else {
-            state = .error("Could not load question.")
+            // Last resort: use fallback instead of showing error
+            let q = questionService.fallbackQuestion(topic: mode.topic)
+            state = .presenting(q)
+            touchProvider.questionDidAppear()
+            useFallback = true
         }
     }
 
@@ -258,7 +267,17 @@ class QuizViewModel: ObservableObject {
         selectedIndex = nil
         showHint = false
         resultMessage = ""
-        state = .idle
+        questionStartTime = Date()
+        currentAnswerChanges = 0
+
+        if useFallback {
+            let q = questionService.fallbackQuestion(topic: mode.topic)
+            state = .presenting(q)
+            touchProvider.questionDidAppear()
+        } else {
+            state = .idle
+            Task { await loadQuestion() }
+        }
     }
 
     // MARK: - Session Management
