@@ -25,9 +25,24 @@ protocol QuestionServiceProtocol {
 
 // MARK: - MCQ Question
 
-struct MCQQuestion: Codable, Equatable {
+struct MCQQuestion: Codable, Equatable, Sendable {
     let question: String
     let options: [String]
     let correct_index: Int
     let hint: String
+
+    nonisolated init(question: String, options: [String], correct_index: Int, hint: String) {
+        self.question = question
+        self.options = options
+        self.correct_index = correct_index
+        self.hint = hint
+    }
+
+    nonisolated init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.question = try container.decode(String.self, forKey: .question)
+        self.options = try container.decode([String].self, forKey: .options)
+        self.correct_index = try container.decode(Int.self, forKey: .correct_index)
+        self.hint = try container.decode(String.self, forKey: .hint)
+    }
 }
