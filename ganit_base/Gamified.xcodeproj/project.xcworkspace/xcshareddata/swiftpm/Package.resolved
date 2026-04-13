@@ -1,0 +1,24 @@
+{
+  "originHash" : "9c70cbbed1f15b787143c7230af7523d5e13008eff78d191fd944545830b7710",
+  "pins" : [
+    {
+      "identity" : "keychainaccess",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kishikawakatsumi/KeychainAccess",
+      "state" : {
+        "branch" : "master",
+        "revision" : "e0c7eebc5a4465a3c4680764f26b7a61f567cdaf"
+      }
+    },
+    {
+      "identity" : "securepropertystorage",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/alexruperez/SecurePropertyStorage",
+      "state" : {
+        "revision" : "ae705265c62c993197ca2f8b64b0f56453d4eb17",
+        "version" : "0.8.2"
+      }
+    }
+  ],
+  "version" : 3
+}

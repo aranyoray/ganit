@@ -8,8 +8,14 @@ ganit/GoogleService-Info.plist
 DerivedData/
 build/
 
+# Swift Package Manager
+Ganit/.build/
+
 # macOS
 .DS_Store
+
+# Claude
+.claude/
 
 # Firebase
 firebase/functions/node_modules/
