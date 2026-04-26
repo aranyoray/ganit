@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Ganit uses the camera for AR math experiences and to understand how you're feeling while learning. Camera data stays on your device and is never sent anywhere.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Ganit listens to your voice during math exercises to understand speech patterns. All audio is processed on your device and is never recorded or stored.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Ganit uses speech recognition to analyze how you describe math problems. Recognition runs entirely on your device.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+</dict>
+</plist>
