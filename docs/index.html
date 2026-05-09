@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GANIT — Learning Math. Seeing Possibilities.</title>
+  <meta name="description" content="GANIT is an AI + AR mobile math app helping children with dyscalculia, ADHD, autism, and math anxiety learn through stories, visuals, and small calm steps." />
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <style>
+    :root {
+      --bg: #0b1020;
+      --surface: #121833;
+      --surface-2: #1a2148;
+      --ink: #f4f6ff;
+      --muted: #b9c0e0;
+      --accent: #4fa3ff;
+      --accent-2: #ff8a3d;
+      --accent-3: #6ee7a8;
+      --pink: #ff6fa3;
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Inter, system-ui, sans-serif;
+      color: var(--ink);
+      background: radial-gradient(1200px 600px at 80% -10%, rgba(79,163,255,0.25), transparent 60%),
+                  radial-gradient(900px 600px at -10% 30%, rgba(255,138,61,0.20), transparent 60%),
+                  var(--bg);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    img { max-width: 100%; display: block; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+    /* Nav */
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 24px;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .3px; }
+    .nav .brand img { width: 36px; height: 36px; border-radius: 8px; background: white; padding: 2px; }
+    .nav ul { list-style: none; display: flex; gap: 22px; padding: 0; margin: 0; }
+    .nav ul a { color: var(--muted); font-size: 14px; }
+    .nav ul a:hover { color: var(--ink); text-decoration: none; }
+
+    /* Hero */
+    .hero {
+      padding: 60px 0 80px;
+      text-align: center;
+    }
+    .hero img.logo {
+      max-width: 280px;
+      margin: 0 auto 24px;
+      filter: drop-shadow(0 20px 50px rgba(79,163,255,0.35));
+    }
+    .hero h1 {
+      font-size: clamp(34px, 5vw, 56px);
+      line-height: 1.05;
+      margin: 0 0 14px;
+      letter-spacing: -0.02em;
+    }
+    .hero h1 .grad {
+      background: linear-gradient(90deg, #4fa3ff, #6ee7a8 60%, #ff8a3d);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .hero p.lead {
+      font-size: clamp(16px, 1.6vw, 20px);
+      color: var(--muted);
+      max-width: 720px;
+      margin: 0 auto 32px;
+    }
+    .cta-row {
+      display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 22px;
+      border-radius: 999px;
+      font-weight: 600; font-size: 15px;
+      border: 1px solid transparent;
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); text-decoration: none; }
+    .btn-primary {
+      background: linear-gradient(135deg, #1d1d1f, #2c2c2e);
+      color: #fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.08);
+    }
+    .btn-primary:hover { box-shadow: 0 16px 40px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.12); }
+    .btn-primary svg { width: 22px; height: 22px; }
+    .btn-primary .small { font-size: 11px; opacity: .8; line-height: 1; display: block; }
+    .btn-primary .big   { font-size: 17px; line-height: 1.05; display: block; }
+    .btn-ghost {
+      color: var(--ink);
+      border-color: rgba(255,255,255,.18);
+      background: rgba(255,255,255,.04);
+    }
+
+    /* Sections */
+    section { padding: 64px 0; }
+    .section-eyebrow {
+      text-transform: uppercase; letter-spacing: .18em; font-size: 12px;
+      color: var(--accent-3); font-weight: 700;
+    }
+    h2 {
+      font-size: clamp(26px, 3vw, 38px); margin: 8px 0 14px; letter-spacing: -.01em;
+    }
+    .lead-2 { color: var(--muted); max-width: 760px; }
+
+    .grid { display: grid; gap: 22px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    @media (max-width: 820px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: linear-gradient(180deg, var(--surface), var(--surface-2));
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+    .card h3 { margin: 0 0 8px; font-size: 18px; }
+    .card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+    .feature-list {
+      list-style: none; padding: 0; margin: 0;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px;
+    }
+    @media (max-width: 700px) { .feature-list { grid-template-columns: 1fr; } }
+    .feature-list li {
+      padding-left: 28px; position: relative; color: var(--muted);
+    }
+    .feature-list li::before {
+      content: ""; position: absolute; left: 0; top: 8px; width: 14px; height: 14px;
+      background: linear-gradient(135deg, #4fa3ff, #6ee7a8);
+      border-radius: 4px; transform: rotate(45deg);
+    }
+
+    .gallery { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); }
+    @media (max-width: 820px) { .gallery { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 500px) { .gallery { grid-template-columns: 1fr; } }
+    .gallery figure {
+      margin: 0; border-radius: 14px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: var(--surface);
+    }
+    .gallery img { width: 100%; height: 220px; object-fit: cover; }
+    .gallery figcaption {
+      padding: 10px 14px; font-size: 13px; color: var(--muted);
+    }
+
+    .split { display: grid; gap: 36px; grid-template-columns: 1.1fr 1fr; align-items: center; }
+    @media (max-width: 820px) { .split { grid-template-columns: 1fr; } }
+    .split img { border-radius: 14px; border: 1px solid rgba(255,255,255,0.08); }
+
+    blockquote {
+      margin: 0; padding: 18px 22px;
+      border-left: 4px solid var(--accent-2);
+      background: rgba(255,138,61,0.08);
+      border-radius: 8px;
+      color: var(--ink);
+      font-style: italic;
+    }
+
+    .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    @media (max-width: 700px) { .stat-row { grid-template-columns: 1fr; } }
+    .stat {
+      background: var(--surface); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius); padding: 22px; text-align: center;
+    }
+    .stat .num {
+      font-size: 34px; font-weight: 800;
+      background: linear-gradient(90deg, #4fa3ff, #ff8a3d);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .stat .label { color: var(--muted); font-size: 14px; }
+
+    .budget { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 700px) { .budget { grid-template-columns: 1fr; } }
+    .budget .item {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+    }
+    .budget .amount { font-weight: 700; color: var(--accent-3); white-space: nowrap; }
+
+    footer {
+      padding: 40px 0 60px; text-align: center; color: var(--muted); font-size: 14px;
+      border-top: 1px solid rgba(255,255,255,0.08); margin-top: 40px;
+    }
+    footer a { color: var(--muted); }
+
+    .pill {
+      display: inline-block; padding: 4px 10px; border-radius: 999px;
+      font-size: 12px; color: var(--ink);
+      background: rgba(79,163,255,0.18); border: 1px solid rgba(79,163,255,0.3);
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="brand">
+      <img src="assets/logo.png" alt="GANIT logo" />
+      <span>GANIT</span>
+    </div>
+    <ul>
+      <li><a href="#about">About</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#process">Process</a></li>
+      <li><a href="#impact">Impact</a></li>
+    </ul>
+  </nav>
+
+  <header class="hero container">
+    <img class="logo" src="assets/logo.png" alt="GANIT — Learning Math. Seeing Possibilities." />
+    <h1>Learning Math. <span class="grad">Seeing Possibilities.</span></h1>
+    <p class="lead">
+      GANIT is a GenAI + AR math companion built for children with dyscalculia, ADHD, autism,
+      and math anxiety — teaching through stories, calm visuals, and small confident steps.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://apps.apple.com/in/app/ganitar/id6763974122" aria-label="Download GANIT on the App Store">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M16.365 1.43c0 1.14-.46 2.21-1.21 2.99-.81.84-2.13 1.49-3.21 1.41-.13-1.1.4-2.24 1.13-2.96.81-.82 2.18-1.43 3.29-1.44zM20.5 17.27c-.55 1.27-.81 1.84-1.51 2.97-.98 1.58-2.36 3.55-4.07 3.57-1.52.02-1.91-.99-3.97-.98-2.06.01-2.49 1-4.01.98-1.71-.02-3.02-1.79-4-3.37-2.74-4.43-3.03-9.62-1.34-12.39 1.2-1.97 3.09-3.12 4.87-3.12 1.81 0 2.95.99 4.45.99 1.45 0 2.34-1 4.43-1 1.58 0 3.26.86 4.45 2.34-3.91 2.14-3.27 7.72.7 9.01z"/>
+        </svg>
+        <span>
+          <span class="small">Download on the</span>
+          <span class="big">App Store</span>
+        </span>
+      </a>
+      <a class="btn btn-ghost" href="#features">See how it works</a>
+    </div>
+  </header>
+
+  <section id="about" class="container">
+    <div class="section-eyebrow">01 · Who I am · What I built</div>
+    <h2>A calm, curious math app for kids who learn differently.</h2>
+    <p class="lead-2">
+      GANIT (GenAI Adaptive Numeracy Improvement and Training) is an AI + AR mobile math app
+      built to help children with dyscalculia, ADHD, autism, and math anxiety learn through
+      stories, visuals, and small calm steps. Using Socratic methods and immersive learning,
+      GANIT makes math feel like exploration — not pressure.
+    </p>
+    <p class="lead-2">
+      It is available as a web app and on the iOS App Store. The Android app is being prototyped.
+    </p>
+
+    <div class="split" style="margin-top:32px">
+      <div>
+        <span class="pill">Made by Aarav Kapoor</span>
+        <span class="pill">Grade 5 · Bullis Charter School</span>
+        <span class="pill">Spring 2026</span>
+        <h3 style="margin-top:18px">Why I built GANIT</h3>
+        <p style="color:var(--muted)">
+          1 in 5 children in the US experience arithmetic differences. After interviewing
+          friends and classmates, I heard the same things again and again — "Addition is scary",
+          "Multiplication confuses me", "UGH" said all the time. I wanted to build something
+          that made math feel kind, colorful, and adventurous instead.
+        </p>
+      </div>
+      <img src="assets/aarav-coding.png" alt="Aarav coding GANIT" />
+    </div>
+  </section>
+
+  <section id="features" class="container">
+    <div class="section-eyebrow">04 · The Final Project</div>
+    <h2>What GANIT does today.</h2>
+    <p class="lead-2">Live app: <a href="https://goganit.app">goganit.app</a> (iOS) · web preview: <a href="https://ganit-phi.vercel.app/">ganit-phi.vercel.app</a></p>
+
+    <ul class="feature-list" style="margin-top:24px">
+      <li><strong>AR mode:</strong> place &amp; count 3D spheres, visualise exponents in AR space.</li>
+      <li><strong>GenAI quiz generator:</strong> single-digit through advanced arithmetic.</li>
+      <li><strong>Story-based lessons</strong> with step-by-step pacing and gentle narration.</li>
+      <li><strong>Calm, encouraging feedback</strong> — no rushing, no judgment.</li>
+      <li><strong>Placement exam</strong> for automatic skill-level detection.</li>
+      <li><strong>Built for neurodiversity:</strong> dyscalculia, ADHD, autism, math anxiety.</li>
+    </ul>
+
+    <div class="gallery" style="margin-top:32px">
+      <figure><img src="assets/ar-shapes.png" alt="AR shapes counting on a table" /><figcaption>AR mode — “How many objects do you see?”</figcaption></figure>
+      <figure><img src="assets/ar-row.png" alt="AR shapes lined up on the floor" /><figcaption>Tactile counting with 3D shapes.</figcaption></figure>
+      <figure><img src="assets/ar-quiz.png" alt="AR quiz showing Correct! Advance" /><figcaption>Calm feedback after each answer.</figcaption></figure>
+      <figure><img src="assets/ar-cubes.png" alt="AR cubes lined up" /><figcaption>Place value &amp; counting in AR.</figcaption></figure>
+      <figure><img src="assets/ar-shapes2.png" alt="More AR shapes" /><figcaption>Color &amp; shape variety for accessibility.</figcaption></figure>
+      <figure><img src="assets/ar-trio.png" alt="Cube, cone, sphere on a rug" /><figcaption>Real-world AR objects on real surfaces.</figcaption></figure>
+    </div>
+
+    <div class="split" style="margin-top:36px; align-items:flex-start">
+      <div class="card">
+        <h3>On the App Store</h3>
+        <p>GANIT is live on the iOS App Store as <em>GanitAR — Learn Math in AR</em> for ages 4+.
+        Tap the button below to install on your iPhone or iPad.</p>
+        <div style="margin-top:16px">
+          <a class="btn btn-primary" href="https://apps.apple.com/in/app/ganitar/id6763974122">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M16.365 1.43c0 1.14-.46 2.21-1.21 2.99-.81.84-2.13 1.49-3.21 1.41-.13-1.1.4-2.24 1.13-2.96.81-.82 2.18-1.43 3.29-1.44zM20.5 17.27c-.55 1.27-.81 1.84-1.51 2.97-.98 1.58-2.36 3.55-4.07 3.57-1.52.02-1.91-.99-3.97-.98-2.06.01-2.49 1-4.01.98-1.71-.02-3.02-1.79-4-3.37-2.74-4.43-3.03-9.62-1.34-12.39 1.2-1.97 3.09-3.12 4.87-3.12 1.81 0 2.95.99 4.45.99 1.45 0 2.34-1 4.43-1 1.58 0 3.26.86 4.45 2.34-3.91 2.14-3.27 7.72.7 9.01z"/>
+            </svg>
+            <span><span class="small">Download on the</span><span class="big">App Store</span></span>
+          </a>
+        </div>
+      </div>
+      <img src="assets/app-store.png" alt="GANIT on the iOS App Store" style="max-height:520px; object-fit:contain; background:#000" />
+    </div>
+  </section>
+
+  <section id="process" class="container">
+    <div class="section-eyebrow">02 · 03 · My Process</div>
+    <h2>From a question to a working app.</h2>
+
+    <div class="grid grid-3" style="margin-top:24px">
+      <div class="card">
+        <h3>The Problem</h3>
+        <p>I interviewed 6 friends about math apps. Friends said "Addition is scary",
+           "Multiplication confuses me", and "UGH" all the time. Existing apps didn't combine
+           generative AI, AR, and story-based mini lessons for learners who struggle.</p>
+      </div>
+      <div class="card">
+        <h3>The Idea</h3>
+        <p>Could bringing tactile and 360° math experiences to every smartphone make math
+           magical? I sketched quest-based learning with big colorful number blocks, calm
+           animations, and adaptive pacing.</p>
+      </div>
+      <div class="card">
+        <h3>The Iterations</h3>
+        <p>Built early prototypes, tested with classmates, iterated on feedback. AR boot time
+           was fixed, the placement UX was redesigned, and a deprecated library was replaced
+           with a supported alternative.</p>
+      </div>
+    </div>
+
+    <div class="split" style="margin-top:36px">
+      <img src="assets/journey.png" alt="Illustration of a star with a laptop journeying to the world" />
+      <div>
+        <h3>Research-led, kid-tested</h3>
+        <ul class="feature-list">
+          <li><strong>Literature review:</strong> dyscalculia &amp; math anxiety on PubMed, IEEE, Google Scholar.</li>
+          <li><strong>Interviews:</strong> 1st &amp; 2nd graders + a 5th-grade friend on the reward system.</li>
+          <li><strong>Build:</strong> RealityKit, ARKit, UIKit; random shapes for color-blind accessibility.</li>
+          <li><strong>Feedback:</strong> 10+ peers used the iOS app; quantified survey results.</li>
+          <li><strong>Test &amp; iterate:</strong> repeated runs on iPad, fixed boot time, deprecated code, added random colors &amp; shapes.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="growth" class="container">
+    <div class="section-eyebrow">05 · Growth &amp; Learnings</div>
+    <h2>What I learned along the way.</h2>
+
+    <div class="grid grid-2" style="margin-top:24px">
+      <div class="card">
+        <h3>Skills built</h3>
+        <ul class="feature-list" style="grid-template-columns:1fr">
+          <li>Coding: Swift, ARKit, RealityKit, GenAI.</li>
+          <li>Research: academic papers, evidence-based design.</li>
+          <li>Leadership: built and ran the GoGanit team.</li>
+          <li>Resilience: many failed prototypes and setbacks.</li>
+          <li>Time management: school + competitions.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Real engineering moments</h3>
+        <ul class="feature-list" style="grid-template-columns:1fr">
+          <li>Display library deprecated mid-build → migrated to a supported alternative.</li>
+          <li>AR boot time of 2+ minutes → optimized loading flow to ~20 seconds.</li>
+          <li>AR placement painful → redesigned UX with visual guides.</li>
+          <li>AR objects at wrong scale → fixed coordinate system and radius values.</li>
+          <li>Two big bugs: picture-in-picture (took a week!) and a 20-meter radius oops.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="ai" class="container">
+    <div class="section-eyebrow">06 · How I used AI</div>
+    <h2>AI as a tool to amplify, not replace.</h2>
+
+    <div class="grid grid-2" style="margin-top:24px">
+      <div class="card">
+        <h3>Tools &amp; resources</h3>
+        <ul class="feature-list" style="grid-template-columns:1fr">
+          <li><strong>ChatGPT &amp; Claude</strong> — brainstorming features, refining story tone &amp; lesson UX.</li>
+          <li><strong>Gemini</strong> — auto-generated 540 questions (30 × 3 topics × 6 levels), filtered &amp; edited.</li>
+          <li><strong>NotebookLM</strong> — organising research notes from PubMed, IEEE, Google Scholar.</li>
+          <li><strong>ARKit + RealityKit + ARCore</strong> — building the immersive AR math experience.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>My AI philosophy</h3>
+        <p>AI should make learning feel calm, personal, and encouraging — especially for
+           children who learn differently. AR should augment both visual and color-blind
+           learners with multi-sensory experiences. Math can feel fun and adventurous when
+           children explore on their own, not because of a preset curriculum that restricts
+           their curiosity.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="impact" class="container">
+    <div class="section-eyebrow">07 · Why it matters — Now &amp; Tomorrow</div>
+    <h2>Tangible impact &amp; what's next.</h2>
+    <p class="lead-2">
+      GANIT helps children with dyscalculia, ADHD, autism, and math anxiety learn math through
+      calm, story-based, AR-powered lessons. Tested with classmates across multiple cycles
+      with consistent positive feedback on the calm UX and AR mode.
+    </p>
+
+    <div class="stat-row" style="margin-top:24px">
+      <div class="stat"><div class="num">1 in 5</div><div class="label">US children with arithmetic differences</div></div>
+      <div class="stat"><div class="num">540</div><div class="label">AI-generated questions filtered &amp; edited</div></div>
+      <div class="stat"><div class="num">10+</div><div class="label">peers tested the iOS app</div></div>
+    </div>
+
+    <h3 style="margin-top:36px">With $2,500, I would…</h3>
+    <div class="budget" style="margin-top:12px">
+      <div class="item"><span>Improve AR quality + age-specific curriculum</span><span class="amount">$200</span></div>
+      <div class="item"><span>10 school outreach events at K–5 institutes ($100 each)</span><span class="amount">$1,000</span></div>
+      <div class="item"><span>2 mental math hackathons at school (users participate free)</span><span class="amount">$500</span></div>
+      <div class="item"><span>Cloud hosting for up to 1,000 users</span><span class="amount">$100</span></div>
+      <div class="item"><span>AI chatbot for real-time in-app support</span><span class="amount">$200</span></div>
+      <div class="item"><span>Contingency + future development store (invest)</span><span class="amount">$500</span></div>
+    </div>
+
+    <blockquote style="margin-top:28px">
+      Long-term vision: make GANIT free and accessible to every child who struggles with math — everywhere.
+    </blockquote>
+  </section>
+
+  <section id="why" class="container">
+    <div class="section-eyebrow">08 · My Why</div>
+    <h2>Math, made safe and possible.</h2>
+    <div class="grid grid-3" style="margin-top:24px">
+      <div class="card">
+        <h3>How I've grown</h3>
+        <p>I developed coding (Swift, ARKit, RealityKit, GenAI), research skills, leadership
+           (founding GoGanit), and resilience. I learned to give and receive feedback constructively.</p>
+      </div>
+      <div class="card">
+        <h3>Looking ahead</h3>
+        <p>I now see myself as someone who can identify a real problem, build a solution from
+           scratch, and keep improving through failure. GANIT taught me that technology is most
+           powerful when built with empathy.</p>
+      </div>
+      <div class="card">
+        <h3>My north star</h3>
+        <p>Making math feel safe, calm, and possible for every child — especially those who
+           have been told they are not a "math person." GANIT is my first step toward that goal.</p>
+      </div>
+    </div>
+
+    <div style="text-align:center; margin-top:42px">
+      <a class="btn btn-primary" href="https://apps.apple.com/in/app/ganitar/id6763974122">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M16.365 1.43c0 1.14-.46 2.21-1.21 2.99-.81.84-2.13 1.49-3.21 1.41-.13-1.1.4-2.24 1.13-2.96.81-.82 2.18-1.43 3.29-1.44zM20.5 17.27c-.55 1.27-.81 1.84-1.51 2.97-.98 1.58-2.36 3.55-4.07 3.57-1.52.02-1.91-.99-3.97-.98-2.06.01-2.49 1-4.01.98-1.71-.02-3.02-1.79-4-3.37-2.74-4.43-3.03-9.62-1.34-12.39 1.2-1.97 3.09-3.12 4.87-3.12 1.81 0 2.95.99 4.45.99 1.45 0 2.34-1 4.43-1 1.58 0 3.26.86 4.45 2.34-3.91 2.14-3.27 7.72.7 9.01z"/>
+        </svg>
+        <span><span class="small">Download on the</span><span class="big">App Store</span></span>
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>Aarav Kapoor · Grade 5, Bullis Charter School · Spring 2026</p>
+      <p>&copy; <span id="year"></span> Aarav Kapoor. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
